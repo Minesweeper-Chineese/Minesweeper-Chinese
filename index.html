@@ -16,6 +16,7 @@
             color: #fff;
             padding: 10px;
             min-height: 100vh;
+            background: linear-gradient(135deg, #1a1a1a 0%, #000 100%);
         }
         .container {
             max-width: 100%;
@@ -25,34 +26,40 @@
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 5px;
-            padding: 8px 12px;
+            margin-bottom: 8px;
+            padding: 10px 15px;
             background: #c0c0c0;
             border: 3px outset #c0c0c0;
-            border-radius: 4px;
+            border-radius: 6px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
         }
         .mines-counter, .timer {
             font-family: 'Digital', monospace;
             background: #000;
             color: #f00;
-            padding: 6px 10px;
-            border-radius: 3px;
-            font-size: 16px;
+            padding: 8px 12px;
+            border-radius: 4px;
+            font-size: 18px;
             font-weight: bold;
-            min-width: 70px;
+            min-width: 80px;
             text-align: center;
+            border: 2px inset #c0c0c0;
         }
         .smiley-btn {
-            width: 40px;
-            height: 40px;
-            font-size: 18px;
-            border: 2px outset #c0c0c0;
-            border-radius: 4px;
+            width: 45px;
+            height: 45px;
+            font-size: 20px;
+            border: 3px outset #c0c0c0;
+            border-radius: 6px;
             background: #c0c0c0;
             cursor: pointer;
             display: flex;
             align-items: center;
             justify-content: center;
+            transition: all 0.1s;
+        }
+        .smiley-btn:active {
+            border: 3px inset #c0c0c0;
         }
         .game-area {
             margin: 0 auto;
@@ -64,14 +71,16 @@
             display: inline-grid;
             gap: 1px;
             background: #bdbdbd;
-            padding: 8px;
-            border: 3px outset #bdbdbd;
-            border-radius: 2px;
+            padding: 10px;
+            border: 4px outset #bdbdbd;
+            border-radius: 4px;
             margin: 0 auto;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.5),
+                        inset 0 1px 0 rgba(255,255,255,0.3);
         }
         .cell {
-            width: 24px;
-            height: 24px;
+            width: 26px;
+            height: 26px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -82,9 +91,11 @@
             user-select: none;
             font-size: 14px;
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: all 0.1s;
         }
         .cell:active {
             border: 1px solid #bdbdbd;
+            background: #a0a0a0;
         }
         .cell.revealed {
             border: 1px solid #bdbdbd;
@@ -97,10 +108,10 @@
         .cell.flag::before {
             content: "旗";
             color: #f00;
+            font-weight: bold;
         }
-        .cell.question::before {
-            content: "?";
-            color: #000;
+        .cell.highlight {
+            background: #ffff99;
         }
         .cell.number-1 { color: #0000ff; }
         .cell.number-2 { color: #008000; }
@@ -112,15 +123,16 @@
         .cell.number-8 { color: #808080; }
         
         .game-controls {
-            margin-top: 15px;
-            padding: 12px;
+            margin-top: 20px;
+            padding: 15px;
             background: #333;
-            border-radius: 8px;
+            border-radius: 10px;
             width: 100%;
             max-width: 400px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.3);
         }
         .control-group {
-            margin: 8px 0;
+            margin: 10px 0;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -142,60 +154,75 @@
         .mode-buttons {
             display: flex;
             gap: 8px;
-            margin: 8px 0;
+            margin: 10px 0;
         }
         .mode-btn {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             background: #555;
             color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
-            font-size: 12px;
+            font-size: 13px;
+            transition: background 0.2s;
         }
         .mode-btn.active {
             background: #007bff;
+            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
         }
         .action-buttons {
             display: flex;
-            gap: 8px;
-            margin: 10px 0;
+            gap: 10px;
+            margin: 12px 0;
         }
         .action-btn {
             flex: 1;
-            padding: 8px;
+            padding: 10px;
             background: #444;
             color: #fff;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
+            transition: background 0.2s;
+        }
+        .action-btn:hover {
+            background: #555;
         }
         .seed-input {
             background: #222;
             color: #fff;
             border: 1px solid #555;
-            border-radius: 4px;
-            padding: 6px;
+            border-radius: 6px;
+            padding: 8px;
             width: 100%;
-            margin-top: 5px;
+            margin-top: 8px;
         }
         .game-info {
-            margin-top: 10px;
-            padding: 8px;
-            background: #333;
-            border-radius: 4px;
+            margin-top: 12px;
+            padding: 10px;
+            background: #2a2a2a;
+            border-radius: 6px;
             font-size: 12px;
             color: #ccc;
         }
         .seed-info {
             font-family: monospace;
             background: #222;
-            padding: 4px;
-            border-radius: 3px;
+            padding: 6px;
+            border-radius: 4px;
             word-break: break-all;
-            margin-top: 4px;
+            margin-top: 6px;
             font-size: 11px;
+        }
+        .instructions {
+            margin-top: 10px;
+            padding: 8px;
+            background: #2a2a2a;
+            border-radius: 6px;
+            font-size: 11px;
+            color: #aaa;
+            line-height: 1.4;
         }
     </style>
 </head>
@@ -213,6 +240,13 @@
 
         <div class="game-area">
             <div id="gameField"></div>
+        </div>
+
+        <div class="instructions">
+            <strong>操作说明:</strong><br>
+            • 点击模式: 左键翻开格子<br>
+            • 标记模式: 左键放置/移除旗帜<br>
+            • 双击数字: 快速打开周围格子 (当旗帜数量匹配时)
         </div>
 
         <div class="game-controls">
@@ -249,8 +283,6 @@
     </div>
 
     <script>
-        // 这里 вставляем весь JavaScript код из предыдущей версии
-        // (полный код игры без изменений в логике)
         class MinesweeperGame {
             constructor(width = 9, height = 9, minesCount = 10) {
                 this.width = width;
@@ -260,12 +292,13 @@
                 this.gameState = 'playing';
                 this.revealedCount = 0;
                 this.flaggedPositions = new Set();
-                this.questionPositions = new Set();
                 this.firstClick = true;
                 this.startTime = null;
                 this.timer = null;
                 this.currentMode = 'reveal';
                 this.cellStates = {};
+                this.highlightedCells = new Set();
+                this.lastClickTime = 0;
             }
             
             generateGame(seed = null) {
@@ -279,11 +312,12 @@
                 this.gameState = 'playing';
                 this.revealedCount = 0;
                 this.flaggedPositions.clear();
-                this.questionPositions.clear();
                 this.firstClick = true;
                 this.cellStates = {};
+                this.highlightedCells.clear();
                 this.stopTimer();
                 this.startTime = null;
+                this.lastClickTime = 0;
                 
                 const field = Array(this.height).fill().map(() => 
                     Array(this.width).fill(0)
@@ -422,33 +456,104 @@
                 }
             }
             
-            handleCellClick(x, y) {
+            handleCellClick(x, y, isDoubleClick = false) {
                 if (this.gameState !== 'playing') return;
                 
                 const key = `${x},${y}`;
+                const currentTime = Date.now();
+                
+                if (isDoubleClick && this.cellStates[key] === 'revealed' && gameData.field[y][x] > 0) {
+                    this.chordClick(x, y);
+                    return;
+                }
                 
                 if (this.currentMode === 'reveal') {
-                    if (!this.flaggedPositions.has(key) && !this.questionPositions.has(key)) {
+                    if (!this.flaggedPositions.has(key)) {
                         this.revealCell(x, y, gameData.field);
                     }
                 } else if (this.currentMode === 'flag') {
-                    this.cycleCellMark(x, y);
+                    this.toggleFlag(x, y);
                 }
+                
+                this.lastClickTime = currentTime;
             }
             
-            cycleCellMark(x, y) {
+            toggleFlag(x, y) {
                 const key = `${x},${y}`;
                 
                 if (this.cellStates[key] === 'revealed') return;
                 
                 if (this.flaggedPositions.has(key)) {
                     this.flaggedPositions.delete(key);
-                    this.questionPositions.add(key);
-                } else if (this.questionPositions.has(key)) {
-                    this.questionPositions.delete(key);
                 } else {
                     this.flaggedPositions.add(key);
                 }
+            }
+            
+            chordClick(x, y) {
+                const cellValue = gameData.field[y][x];
+                let flagCount = 0;
+                const unrevealedCells = [];
+                
+                // 计算周围旗帜数量
+                for (let dx = -1; dx <= 1; dx++) {
+                    for (let dy = -1; dy <= 1; dy++) {
+                        if (dx === 0 && dy === 0) continue;
+                        
+                        const nx = x + dx;
+                        const ny = y + dy;
+                        
+                        if (nx >= 0 && nx < this.width && ny >= 0 && ny < this.height) {
+                            const neighborKey = `${nx},${ny}`;
+                            if (this.flaggedPositions.has(neighborKey)) {
+                                flagCount++;
+                            } else if (!this.cellStates[neighborKey]) {
+                                unrevealedCells.push([nx, ny]);
+                            }
+                        }
+                    }
+                }
+                
+                // 如果旗帜数量匹配数字，打开周围格子
+                if (flagCount === cellValue) {
+                    let hitMine = false;
+                    unrevealedCells.forEach(([nx, ny]) => {
+                        if (gameData.field[ny][nx] === -1) {
+                            hitMine = true;
+                        }
+                        this.revealCell(nx, ny, gameData.field);
+                    });
+                    
+                    if (hitMine) {
+                        this.gameState = 'gameover';
+                        this.stopTimer();
+                    }
+                }
+            }
+            
+            highlightAround(x, y) {
+                this.highlightedCells.clear();
+                
+                if (this.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
+                    for (let dx = -1; dx <= 1; dx++) {
+                        for (let dy = -1; dy <= 1; dy++) {
+                            if (dx === 0 && dy === 0) continue;
+                            
+                            const nx = x + dx;
+                            const ny = y + dy;
+                            
+                            if (nx >= 0 && nx < this.width && 
+                                ny >= 0 && ny < this.height && 
+                                !this.cellStates[`${nx},${ny}`]) {
+                                this.highlightedCells.add(`${nx},${ny}`);
+                            }
+                        }
+                    }
+                }
+            }
+            
+            clearHighlight() {
+                this.highlightedCells.clear();
             }
             
             checkWinCondition(field) {
@@ -488,6 +593,7 @@
         let currentGame = null;
         let gameData = null;
         const game = new MinesweeperGame();
+        let clickTimeout = null;
 
         function startNewGame() {
             const width = parseInt(document.getElementById('width').value) || 9;
@@ -536,6 +642,38 @@
             }
         }
 
+        function handleCellClick(x, y) {
+            const currentTime = Date.now();
+            const isDoubleClick = (currentTime - game.lastClickTime < 300);
+            
+            if (isDoubleClick && game.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
+                game.handleCellClick(x, y, true);
+            } else {
+                if (clickTimeout) {
+                    clearTimeout(clickTimeout);
+                }
+                clickTimeout = setTimeout(() => {
+                    game.handleCellClick(x, y, false);
+                    displayGame();
+                }, 200);
+            }
+            
+            displayGame();
+        }
+
+        function handleMouseDown(x, y) {
+            if (game.gameState !== 'playing') return;
+            if (game.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
+                game.highlightAround(x, y);
+                displayGame();
+            }
+        }
+
+        function handleMouseUp() {
+            game.clearHighlight();
+            displayGame();
+        }
+
         function displayGame() {
             const gameField = document.getElementById('gameField');
             const currentSeed = document.getElementById('currentSeed');
@@ -552,7 +690,7 @@
             
             const fieldElement = document.createElement('div');
             fieldElement.className = 'field';
-            fieldElement.style.gridTemplateColumns = `repeat(${game.width}, 24px)`;
+            fieldElement.style.gridTemplateColumns = `repeat(${game.width}, 26px)`;
             
             for (let y = 0; y < game.height; y++) {
                 for (let x = 0; x < game.width; x++) {
@@ -577,9 +715,11 @@
                     } else {
                         if (game.flaggedPositions.has(key)) {
                             cell.classList.add('flag');
-                        } else if (game.questionPositions.has(key)) {
-                            cell.classList.add('question');
                         }
+                    }
+                    
+                    if (game.highlightedCells.has(key)) {
+                        cell.classList.add('highlight');
                     }
                     
                     if (game.gameState === 'gameover' && value === -1 && !game.flaggedPositions.has(key)) {
@@ -588,9 +728,14 @@
                     }
                     
                     cell.addEventListener('click', () => handleCellClick(x, y));
+                    cell.addEventListener('mousedown', () => handleMouseDown(x, y));
+                    cell.addEventListener('mouseup', handleMouseUp);
+                    cell.addEventListener('mouseleave', handleMouseUp);
+                    cell.addEventListener('touchstart', () => handleMouseDown(x, y));
+                    cell.addEventListener('touchend', handleMouseUp);
                     cell.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
-                        game.cycleCellMark(x, y);
+                        game.toggleFlag(x, y);
                         displayGame();
                     });
                     
@@ -600,11 +745,6 @@
             
             gameField.innerHTML = '';
             gameField.appendChild(fieldElement);
-        }
-
-        function handleCellClick(x, y) {
-            game.handleCellClick(x, y, gameData.field);
-            displayGame();
         }
 
         String.prototype.hashCode = function() {
