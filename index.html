@@ -67,43 +67,39 @@
             flex-direction: column;
             align-items: center;
         }
+        /* ОБНОВЛЁННОЕ ПОЛЕ - пиксельное как в оригинале */
         .field {
             display: inline-grid;
-            gap: 1px;
-            background: #bdbdbd;
-            padding: 10px;
-            border: 4px outset #bdbdbd;
-            border-radius: 4px;
+            gap: 0; /* УБРАТЬ промежутки между клетками */
+            background: #c0c0c0; /* СЕРЫЙ фон как в Windows */
+            padding: 8px;
+            border: 4px outset #c0c0c0; /* Классическая 3D граница */
             margin: 0 auto;
-            box-shadow: 0 8px 25px rgba(0,0,0,0.5),
-                        inset 0 1px 0 rgba(255,255,255,0.3);
         }
         .cell {
-            width: 26px;
-            height: 26px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #bdbdbd;
-            border: 2px outset #bdbdbd;
+            background: #c0c0c0; /* СЕРЫЙ фон */
+            border: 2px outset #c0c0c0; /* 3D эффект выпуклой кнопки */
             font-weight: bold;
             cursor: pointer;
             user-select: none;
-            font-size: 14px;
+            font-size: 16px; /* УВЕЛИЧЕННЫЙ шрифт */
             font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
-            transition: all 0.1s;
         }
         .cell:active {
-            border: 1px solid #bdbdbd;
-            background: #a0a0a0;
+            border: 2px inset #c0c0c0; /* Вдавленный эффект при нажатии */
         }
         .cell.revealed {
-            border: 1px solid #bdbdbd;
-            background: #e0e0e0;
+            border: 1px solid #808080; /* Плоская серая граница */
+            background: #c0c0c0; /* Остаётся серым */
         }
         .cell.mine.revealed {
-            background: #ff4444;
-            border: 1px solid #ff4444;
+            background: #ff0000;
+            border: 1px solid #ff0000;
         }
         .cell.flag::before {
             content: "旗";
@@ -299,9 +295,10 @@
                 6: '六',
                 7: '七',
                 8: '八',
-                9: '九',
+                9: '九'
             };
             
+            // ВСЕГДА просто комбинация цифр
             return num.toString().split('').map(digit => chineseNumbers[digit]).join('');
         }
 
@@ -704,7 +701,7 @@
             
             const fieldElement = document.createElement('div');
             fieldElement.className = 'field';
-            fieldElement.style.gridTemplateColumns = `repeat(${game.width}, 26px)`;
+            fieldElement.style.gridTemplateColumns = `repeat(${game.width}, 24px)`; // 24px вместо 26px
             
             for (let y = 0; y < game.height; y++) {
                 for (let x = 0; x < game.width; x++) {
@@ -724,7 +721,6 @@
                             cell.textContent = '雷';
                         } else if (value > 0) {
                             cell.classList.add(`number-${value}`);
-                            // Отображаем китайскую цифру вместо арабской
                             cell.textContent = toChineseNumber(value);
                         }
                     } else {
