@@ -111,7 +111,10 @@
             font-weight: bold;
         }
         .cell.highlight {
-            background: #ffff99;
+            background: #ffff99 !important;
+        }
+        .cell.highlight-flag {
+            background: #ffcccc !important;
         }
         .cell.number-1 { color: #0000ff; }
         .cell.number-2 { color: #008000; }
@@ -246,7 +249,7 @@
             <strong>操作说明:</strong><br>
             • 点击模式: 左键翻开格子<br>
             • 标记模式: 左键放置/移除旗帜<br>
-            • 双击数字: 快速打开周围格子 (当旗帜数量匹配时)
+            • 快速点击: 点击数字同时按住左右键(或双击)快速打开周围
         </div>
 
         <div class="game-controls">
@@ -298,7 +301,7 @@
                 this.currentMode = 'reveal';
                 this.cellStates = {};
                 this.highlightedCells = new Set();
-                this.lastClickTime = 0;
+                this.isChordPressed = false;
             }
             
             generateGame(seed = null) {
@@ -315,9 +318,9 @@
                 this.firstClick = true;
                 this.cellStates = {};
                 this.highlightedCells.clear();
+                this.isChordPressed = false;
                 this.stopTimer();
                 this.startTime = null;
-                this.lastClickTime = 0;
                 
                 const field = Array(this.height).fill().map(() => 
                     Array(this.width).fill(0)
@@ -456,16 +459,10 @@
                 }
             }
             
-            handleCellClick(x, y, isDoubleClick = false) {
+            handleCellClick(x, y) {
                 if (this.gameState !== 'playing') return;
                 
                 const key = `${x},${y}`;
-                const currentTime = Date.now();
-                
-                if (isDoubleClick && this.cellStates[key] === 'revealed' && gameData.field[y][x] > 0) {
-                    this.chordClick(x, y);
-                    return;
-                }
                 
                 if (this.currentMode === 'reveal') {
                     if (!this.flaggedPositions.has(key)) {
@@ -474,8 +471,6 @@
                 } else if (this.currentMode === 'flag') {
                     this.toggleFlag(x, y);
                 }
-                
-                this.lastClickTime = currentTime;
             }
             
             toggleFlag(x, y) {
@@ -490,12 +485,17 @@
                 }
             }
             
+            // БЫСТРОЕ ОТКРЫТИЕ - исправленная версия
             chordClick(x, y) {
+                if (this.gameState !== 'playing') return;
+                if (this.cellStates[`${x},${y}`] !== 'revealed') return;
+                if (gameData.field[y][x] <= 0) return;
+                
                 const cellValue = gameData.field[y][x];
                 let flagCount = 0;
-                const unrevealedCells = [];
+                const cellsToReveal = [];
                 
-                // 计算周围旗帜数量
+                // Считаем флажки вокруг и собираем клетки для открытия
                 for (let dx = -1; dx <= 1; dx++) {
                     for (let dy = -1; dy <= 1; dy++) {
                         if (dx === 0 && dy === 0) continue;
@@ -508,21 +508,22 @@
                             if (this.flaggedPositions.has(neighborKey)) {
                                 flagCount++;
                             } else if (!this.cellStates[neighborKey]) {
-                                unrevealedCells.push([nx, ny]);
+                                cellsToReveal.push([nx, ny]);
                             }
                         }
                     }
                 }
                 
-                // 如果旗帜数量匹配数字，打开周围格子
+                // Если количество флажков совпадает с цифрой - открываем
                 if (flagCount === cellValue) {
                     let hitMine = false;
-                    unrevealedCells.forEach(([nx, ny]) => {
+                    
+                    for (const [nx, ny] of cellsToReveal) {
                         if (gameData.field[ny][nx] === -1) {
                             hitMine = true;
                         }
                         this.revealCell(nx, ny, gameData.field);
-                    });
+                    }
                     
                     if (hitMine) {
                         this.gameState = 'gameover';
@@ -531,7 +532,8 @@
                 }
             }
             
-            highlightAround(x, y) {
+            // ПОДСВЕТКА для быстрого открытия - исправленная
+            highlightChordArea(x, y) {
                 this.highlightedCells.clear();
                 
                 if (this.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
@@ -543,9 +545,16 @@
                             const ny = y + dy;
                             
                             if (nx >= 0 && nx < this.width && 
-                                ny >= 0 && ny < this.height && 
-                                !this.cellStates[`${nx},${ny}`]) {
-                                this.highlightedCells.add(`${nx},${ny}`);
+                                ny >= 0 && ny < this.height) {
+                                const neighborKey = `${nx},${ny}`;
+                                
+                                if (!this.cellStates[neighborKey]) {
+                                    if (this.flaggedPositions.has(neighborKey)) {
+                                        this.highlightedCells.add(neighborKey + '-flag');
+                                    } else {
+                                        this.highlightedCells.add(neighborKey);
+                                    }
+                                }
                             }
                         }
                     }
@@ -593,7 +602,7 @@
         let currentGame = null;
         let gameData = null;
         const game = new MinesweeperGame();
-        let clickTimeout = null;
+        let chordActive = false;
 
         function startNewGame() {
             const width = parseInt(document.getElementById('width').value) || 9;
@@ -643,35 +652,25 @@
         }
 
         function handleCellClick(x, y) {
-            const currentTime = Date.now();
-            const isDoubleClick = (currentTime - game.lastClickTime < 300);
-            
-            if (isDoubleClick && game.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
-                game.handleCellClick(x, y, true);
-            } else {
-                if (clickTimeout) {
-                    clearTimeout(clickTimeout);
-                }
-                clickTimeout = setTimeout(() => {
-                    game.handleCellClick(x, y, false);
-                    displayGame();
-                }, 200);
-            }
-            
+            game.handleCellClick(x, y);
             displayGame();
         }
 
-        function handleMouseDown(x, y) {
-            if (game.gameState !== 'playing') return;
+        function handleChordStart(x, y) {
             if (game.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
-                game.highlightAround(x, y);
+                chordActive = true;
+                game.highlightChordArea(x, y);
                 displayGame();
             }
         }
 
-        function handleMouseUp() {
-            game.clearHighlight();
-            displayGame();
+        function handleChordEnd(x, y) {
+            if (chordActive) {
+                chordActive = false;
+                game.chordClick(x, y);
+                game.clearHighlight();
+                displayGame();
+            }
         }
 
         function displayGame() {
@@ -703,6 +702,7 @@
                     const value = gameData.field[y][x];
                     const cellState = game.cellStates[key];
                     
+                    // Основное отображение клетки
                     if (cellState === 'revealed') {
                         cell.classList.add('revealed');
                         if (value === -1) {
@@ -718,21 +718,37 @@
                         }
                     }
                     
+                    // Подсветка для быстрого открытия
                     if (game.highlightedCells.has(key)) {
                         cell.classList.add('highlight');
+                    } else if (game.highlightedCells.has(key + '-flag')) {
+                        cell.classList.add('highlight-flag');
                     }
                     
+                    // Показ всех мин при проигрыше
                     if (game.gameState === 'gameover' && value === -1 && !game.flaggedPositions.has(key)) {
                         cell.classList.add('revealed', 'mine');
                         cell.textContent = '雷';
                     }
                     
+                    // Обработчики событий
                     cell.addEventListener('click', () => handleCellClick(x, y));
-                    cell.addEventListener('mousedown', () => handleMouseDown(x, y));
-                    cell.addEventListener('mouseup', handleMouseUp);
-                    cell.addEventListener('mouseleave', handleMouseUp);
-                    cell.addEventListener('touchstart', () => handleMouseDown(x, y));
-                    cell.addEventListener('touchend', handleMouseUp);
+                    
+                    // Для быстрого открытия - зажатие на открытой цифре
+                    if (cellState === 'revealed' && value > 0) {
+                        cell.addEventListener('mousedown', (e) => {
+                            if (e.button === 0) { // Левая кнопка
+                                handleChordStart(x, y);
+                            }
+                        });
+                        cell.addEventListener('mouseup', (e) => {
+                            if (e.button === 0) {
+                                handleChordEnd(x, y);
+                            }
+                        });
+                    }
+                    
+                    // Правая кнопка для флажков
                     cell.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         game.toggleFlag(x, y);
