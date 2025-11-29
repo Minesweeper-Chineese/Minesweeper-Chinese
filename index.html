@@ -56,7 +56,6 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            transition: all 0.1s;
         }
         .smiley-btn:active {
             border: 3px inset #c0c0c0;
@@ -67,13 +66,12 @@
             flex-direction: column;
             align-items: center;
         }
-        /* ОБНОВЛЁННОЕ ПОЛЕ - пиксельное как в оригинале */
         .field {
             display: inline-grid;
-            gap: 0; /* УБРАТЬ промежутки между клетками */
-            background: #c0c0c0; /* СЕРЫЙ фон как в Windows */
+            gap: 0;
+            background: #c0c0c0;
             padding: 8px;
-            border: 4px outset #c0c0c0; /* Классическая 3D граница */
+            border: 4px outset #c0c0c0;
             margin: 0 auto;
         }
         .cell {
@@ -82,20 +80,21 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #c0c0c0; /* СЕРЫЙ фон */
-            border: 2px outset #c0c0c0; /* 3D эффект выпуклой кнопки */
+            background: #c0c0c0;
+            border: 2px outset #c0c0c0;
             font-weight: bold;
             cursor: pointer;
             user-select: none;
-            font-size: 16px; /* УВЕЛИЧЕННЫЙ шрифт */
+            font-size: 16px;
             font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
         }
-        .cell:active {
-            border: 2px inset #c0c0c0; /* Вдавленный эффект при нажатии */
+        /* ПРАВИЛЬНАЯ АНИМАЦИЯ НАЖАТИЯ */
+        .cell.pressed {
+            border: 2px inset #c0c0c0 !important;
         }
         .cell.revealed {
-            border: 1px solid #808080; /* Плоская серая граница */
-            background: #c0c0c0; /* Остаётся серым */
+            border: 1px solid #808080;
+            background: #c0c0c0;
         }
         .cell.mine.revealed {
             background: #ff0000;
@@ -112,7 +111,6 @@
         .cell.highlight-flag {
             background: #ffcccc !important;
         }
-        /* Стили для китайских цифр */
         .cell.number-1 { color: #0000ff; }
         .cell.number-2 { color: #008000; }
         .cell.number-3 { color: #ff0000; }
@@ -165,11 +163,9 @@
             border-radius: 6px;
             cursor: pointer;
             font-size: 13px;
-            transition: background 0.2s;
         }
         .mode-btn.active {
             background: #007bff;
-            box-shadow: 0 2px 8px rgba(0,123,255,0.3);
         }
         .action-buttons {
             display: flex;
@@ -184,10 +180,6 @@
             border: none;
             border-radius: 6px;
             cursor: pointer;
-            transition: background 0.2s;
-        }
-        .action-btn:hover {
-            background: #555;
         }
         .seed-input {
             background: #222;
@@ -283,7 +275,6 @@
     </div>
 
     <script>
-        // Функция для преобразования арабских цифр в китайские
         function toChineseNumber(num) {
             const chineseNumbers = {
                 0: '〇',
@@ -297,8 +288,6 @@
                 8: '八',
                 9: '九'
             };
-            
-            // ВСЕГДА просто комбинация цифр
             return num.toString().split('').map(digit => chineseNumbers[digit]).join('');
         }
 
@@ -317,7 +306,6 @@
                 this.currentMode = 'reveal';
                 this.cellStates = {};
                 this.highlightedCells = new Set();
-                this.isChordPressed = false;
             }
             
             generateGame(seed = null) {
@@ -334,7 +322,6 @@
                 this.firstClick = true;
                 this.cellStates = {};
                 this.highlightedCells.clear();
-                this.isChordPressed = false;
                 this.stopTimer();
                 this.startTime = null;
                 
@@ -614,7 +601,7 @@
         let currentGame = null;
         let gameData = null;
         const game = new MinesweeperGame();
-        let chordActive = false;
+        let pressedCell = null;
 
         function startNewGame() {
             const width = parseInt(document.getElementById('width').value) || 9;
@@ -663,26 +650,36 @@
             }
         }
 
-        function handleCellClick(x, y) {
-            game.handleCellClick(x, y);
-            displayGame();
-        }
-
-        function handleChordStart(x, y) {
-            if (game.cellStates[`${x},${y}`] === 'revealed' && gameData.field[y][x] > 0) {
-                chordActive = true;
+        function handleMouseDown(x, y) {
+            if (game.gameState !== 'playing') return;
+            
+            const key = `${x},${y}`;
+            const cell = document.querySelector(`.cell[data-x="${x}"][data-y="${y}"]`);
+            
+            if (cell && !cell.classList.contains('revealed') && !cell.classList.contains('flag')) {
+                cell.classList.add('pressed');
+                pressedCell = cell;
+            }
+            
+            if (game.cellStates[key] === 'revealed' && gameData.field[y][x] > 0) {
                 game.highlightChordArea(x, y);
                 displayGame();
             }
         }
 
-        function handleChordEnd(x, y) {
-            if (chordActive) {
-                chordActive = false;
-                game.chordClick(x, y);
-                game.clearHighlight();
-                displayGame();
+        function handleMouseUp(x, y) {
+            if (pressedCell) {
+                pressedCell.classList.remove('pressed');
+                pressedCell = null;
             }
+            
+            game.clearHighlight();
+            handleCellClick(x, y);
+        }
+
+        function handleCellClick(x, y) {
+            game.handleCellClick(x, y);
+            displayGame();
         }
 
         function displayGame() {
@@ -701,7 +698,7 @@
             
             const fieldElement = document.createElement('div');
             fieldElement.className = 'field';
-            fieldElement.style.gridTemplateColumns = `repeat(${game.width}, 24px)`; // 24px вместо 26px
+            fieldElement.style.gridTemplateColumns = `repeat(${game.width}, 24px)`;
             
             for (let y = 0; y < game.height; y++) {
                 for (let x = 0; x < game.width; x++) {
@@ -740,20 +737,14 @@
                         cell.textContent = '雷';
                     }
                     
-                    cell.addEventListener('click', () => handleCellClick(x, y));
-                    
-                    if (cellState === 'revealed' && value > 0) {
-                        cell.addEventListener('mousedown', (e) => {
-                            if (e.button === 0) {
-                                handleChordStart(x, y);
-                            }
-                        });
-                        cell.addEventListener('mouseup', (e) => {
-                            if (e.button === 0) {
-                                handleChordEnd(x, y);
-                            }
-                        });
-                    }
+                    cell.addEventListener('mousedown', () => handleMouseDown(x, y));
+                    cell.addEventListener('mouseup', () => handleMouseUp(x, y));
+                    cell.addEventListener('mouseleave', () => {
+                        if (pressedCell === cell) {
+                            cell.classList.remove('pressed');
+                            pressedCell = null;
+                        }
+                    });
                     
                     cell.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
