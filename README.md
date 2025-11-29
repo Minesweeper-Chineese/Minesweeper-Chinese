@@ -5,69 +5,69 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>扫雷游戏</title>
     <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
         body {
             font-family: 'Microsoft YaHei', Arial, sans-serif;
-            max-width: 600px;
-            margin: 0 auto;
-            padding: 20px;
-            background-color: #f0f0f0;
-            text-align: center;
+            background: #000;
+            color: #fff;
+            padding: 10px;
+            min-height: 100vh;
         }
         .container {
-            background: white;
-            padding: 20px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            max-width: 100%;
+            margin: 0 auto;
         }
-        .controls {
-            margin-bottom: 20px;
-            padding: 15px;
-            background: #e8f4fd;
-            border-radius: 5px;
-        }
-        .control-group {
-            margin: 10px 0;
-        }
-        label {
-            display: inline-block;
-            width: 100px;
-            text-align: right;
-            margin-right: 10px;
-        }
-        input, button, select {
+        .game-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 5px;
             padding: 8px 12px;
-            margin: 5px;
-            border: 1px solid #ddd;
+            background: #c0c0c0;
+            border: 3px outset #c0c0c0;
             border-radius: 4px;
         }
-        button {
-            background: #4CAF50;
-            color: white;
-            border: none;
+        .mines-counter, .timer {
+            font-family: 'Digital', monospace;
+            background: #000;
+            color: #f00;
+            padding: 6px 10px;
+            border-radius: 3px;
+            font-size: 16px;
+            font-weight: bold;
+            min-width: 70px;
+            text-align: center;
+        }
+        .smiley-btn {
+            width: 40px;
+            height: 40px;
+            font-size: 18px;
+            border: 2px outset #c0c0c0;
+            border-radius: 4px;
+            background: #c0c0c0;
             cursor: pointer;
-            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
-        button:hover {
-            background: #45a049;
-        }
-        .mode-selector {
-            margin: 10px 0;
-        }
-        .mode-btn {
-            background: #6c757d;
-            margin: 2px;
-        }
-        .mode-btn.active {
-            background: #007bff;
+        .game-area {
+            margin: 0 auto;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
         }
         .field {
             display: inline-grid;
             gap: 1px;
-            margin: 20px auto;
             background: #bdbdbd;
             padding: 8px;
             border: 3px outset #bdbdbd;
             border-radius: 2px;
+            margin: 0 auto;
         }
         .cell {
             width: 24px;
@@ -95,7 +95,8 @@
             border: 1px solid #ff4444;
         }
         .cell.flag::before {
-            content: "🚩";
+            content: "旗";
+            color: #f00;
         }
         .cell.question::before {
             content: "?";
@@ -109,114 +110,147 @@
         .cell.number-6 { color: #008080; }
         .cell.number-7 { color: #000000; }
         .cell.number-8 { color: #808080; }
-        .game-info {
+        
+        .game-controls {
+            margin-top: 15px;
+            padding: 12px;
+            background: #333;
+            border-radius: 8px;
+            width: 100%;
+            max-width: 400px;
+        }
+        .control-group {
+            margin: 8px 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .control-group label {
+            color: #ccc;
+            font-size: 14px;
+            min-width: 80px;
+        }
+        .control-group input {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 6px;
+            width: 60px;
+            text-align: center;
+        }
+        .mode-buttons {
+            display: flex;
+            gap: 8px;
+            margin: 8px 0;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 8px;
+            background: #555;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+        }
+        .mode-btn.active {
+            background: #007bff;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 8px;
             margin: 10px 0;
-            padding: 10px;
-            background: #f8f9fa;
-            border-radius: 5px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 8px;
+            background: #444;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .seed-input {
+            background: #222;
+            color: #fff;
+            border: 1px solid #555;
+            border-radius: 4px;
+            padding: 6px;
+            width: 100%;
+            margin-top: 5px;
+        }
+        .game-info {
+            margin-top: 10px;
+            padding: 8px;
+            background: #333;
+            border-radius: 4px;
+            font-size: 12px;
+            color: #ccc;
         }
         .seed-info {
             font-family: monospace;
-            background: #eee;
-            padding: 5px;
+            background: #222;
+            padding: 4px;
             border-radius: 3px;
             word-break: break-all;
-        }
-        .game-status {
-            padding: 10px;
-            margin: 10px 0;
-            border-radius: 5px;
-            text-align: center;
-            font-weight: bold;
-            font-size: 18px;
-        }
-        .status-playing {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-        .status-gameover {
-            background: #ffebee;
-            color: #c62828;
-        }
-        .status-win {
-            background: #e8f5e8;
-            color: #2e7d32;
-        }
-        .mines-counter {
-            font-family: 'Digital', monospace;
-            background: #000;
-            color: #f00;
-            padding: 5px 10px;
-            border-radius: 3px;
-            font-size: 18px;
-            font-weight: bold;
-        }
-        .game-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 10px;
-            padding: 10px;
-            background: #bdbdbd;
-            border: 3px outset #bdbdbd;
+            margin-top: 4px;
+            font-size: 11px;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>扫雷游戏</h1>
-        
         <div class="game-header">
             <div class="mines-counter">
-                地雷: <span id="remainingMines">10</span>
+                雷: <span id="remainingMines">10</span>
             </div>
-            <button onclick="startNewGame()" style="font-size: 20px;">😊</button>
+            <button class="smiley-btn" onclick="startNewGame()">阿!</button>
             <div class="timer">
-                时间: <span id="gameTimer">0</span>
+                时: <span id="gameTimer">0</span>
             </div>
         </div>
 
-        <div class="game-status status-playing" id="gameStatus">
-            游戏进行中
+        <div class="game-area">
+            <div id="gameField"></div>
         </div>
-        
-        <div class="controls">
+
+        <div class="game-controls">
             <div class="control-group">
-                <label for="width">宽度:</label>
-                <input type="number" id="width" value="9" min="5" max="20">
+                <label>宽度:</label>
+                <input type="number" id="width" value="9" min="5" max="15">
                 
-                <label for="height">高度:</label>
-                <input type="number" id="height" value="9" min="5" max="20">
+                <label>高度:</label>
+                <input type="number" id="height" value="9" min="5" max="15">
             </div>
             
             <div class="control-group">
-                <label for="mines">地雷数目:</label>
-                <input type="number" id="mines" value="10" min="1" max="50">
+                <label>地雷数:</label>
+                <input type="number" id="mines" value="10" min="1" max="30">
             </div>
 
-            <div class="control-group">
-                <label>游戏模式:</label>
+            <div class="mode-buttons">
                 <button class="mode-btn active" onclick="setMode('reveal')">点击模式</button>
                 <button class="mode-btn" onclick="setMode('flag')">标记模式</button>
             </div>
-            
-            <div class="control-group">
-                <button onclick="startNewGame()">新游戏</button>
-                <button onclick="generateWithSeed()">使用种子</button>
-                <input type="text" id="customSeed" placeholder="输入种子">
-            </div>
-        </div>
 
-        <div id="gameField"></div>
-        
-        <div class="game-info">
-            <strong>游戏统计:</strong>
-            <div>已翻开: <span id="revealedCells">0</span> / <span id="totalCells">81</span></div>
-            <div>种子: <span class="seed-info" id="currentSeed">-</span></div>
+            <div class="action-buttons">
+                <button class="action-btn" onclick="startNewGame()">新游戏</button>
+                <button class="action-btn" onclick="generateWithSeed()">种子游戏</button>
+            </div>
+
+            <input type="text" id="customSeed" class="seed-input" placeholder="输入种子号">
+
+            <div class="game-info">
+                <div>已开: <span id="revealedCells">0</span>/<span id="totalCells">81</span></div>
+                <div>种子: <span class="seed-info" id="currentSeed">-</span></div>
+            </div>
         </div>
     </div>
 
     <script>
+        // 这里 вставляем весь JavaScript код из предыдущей версии
+        // (полный код игры без изменений в логике)
         class MinesweeperGame {
             constructor(width = 9, height = 9, minesCount = 10) {
                 this.width = width;
@@ -230,8 +264,8 @@
                 this.firstClick = true;
                 this.startTime = null;
                 this.timer = null;
-                this.currentMode = 'reveal'; // 'reveal' or 'flag'
-                this.cellStates = {}; // Track each cell's display state
+                this.currentMode = 'reveal';
+                this.cellStates = {};
             }
             
             generateGame(seed = null) {
@@ -287,7 +321,6 @@
                     const x = Math.floor(this.random() * this.width);
                     const y = Math.floor(this.random() * this.height);
                     
-                    // 确保第一个点击的格子不是地雷
                     if ((x === firstX && y === firstY) || 
                         Math.abs(x - firstX) <= 1 && Math.abs(y - firstY) <= 1) {
                         continue;
@@ -472,7 +505,7 @@
         function generateWithSeed() {
             const seedInput = document.getElementById('customSeed').value;
             if (!seedInput) {
-                alert('请输入种子');
+                alert('请输入种子号');
                 return;
             }
             
@@ -509,7 +542,6 @@
             const totalCells = document.getElementById('totalCells');
             const remainingMines = document.getElementById('remainingMines');
             const revealedCells = document.getElementById('revealedCells');
-            const gameStatus = document.getElementById('gameStatus');
             const gameTimer = document.getElementById('gameTimer');
             
             currentSeed.textContent = gameData.seed;
@@ -517,19 +549,6 @@
             remainingMines.textContent = game.getRemainingMines();
             revealedCells.textContent = game.revealedCount;
             gameTimer.textContent = game.getElapsedTime();
-            
-            // 更新游戏状态显示
-            const statusElement = document.getElementById('gameStatus');
-            if (game.gameState === 'playing') {
-                statusElement.className = 'game-status status-playing';
-                statusElement.textContent = '游戏进行中';
-            } else if (game.gameState === 'gameover') {
-                statusElement.className = 'game-status status-gameover';
-                statusElement.textContent = '游戏结束！你踩到地雷了！';
-            } else if (game.gameState === 'win') {
-                statusElement.className = 'game-status status-win';
-                statusElement.textContent = '恭喜！你赢了！';
-            }
             
             const fieldElement = document.createElement('div');
             fieldElement.className = 'field';
@@ -546,12 +565,11 @@
                     const value = gameData.field[y][x];
                     const cellState = game.cellStates[key];
                     
-                    // 设置单元格内容
                     if (cellState === 'revealed') {
                         cell.classList.add('revealed');
                         if (value === -1) {
                             cell.classList.add('mine');
-                            cell.textContent = '💣';
+                            cell.textContent = '雷';
                         } else if (value > 0) {
                             cell.classList.add(`number-${value}`);
                             cell.textContent = value;
@@ -564,13 +582,11 @@
                         }
                     }
                     
-                    // 游戏结束时显示所有地雷
                     if (game.gameState === 'gameover' && value === -1 && !game.flaggedPositions.has(key)) {
                         cell.classList.add('revealed', 'mine');
-                        cell.textContent = '💣';
+                        cell.textContent = '雷';
                     }
                     
-                    // 添加点击事件
                     cell.addEventListener('click', () => handleCellClick(x, y));
                     cell.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
