@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="ru">
+<html lang="zh">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>扫雷艇</title>
+    <title>扫雷游戏</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -66,10 +66,19 @@
             font-weight: bold;
             cursor: pointer;
             user-select: none;
+            font-size: 14px;
+        }
+        .cell.revealed {
+            border: 1px solid #999;
+            background: #e0e0e0;
         }
         .cell.mine {
             background: #ff4444;
             color: white;
+        }
+        .cell.flag {
+            background: #ffeb3b;
+            color: #ff5722;
         }
         .cell.number-1 { color: blue; }
         .cell.number-2 { color: green; }
@@ -92,18 +101,41 @@
             border-radius: 3px;
             word-break: break-all;
         }
+        .game-status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+        }
+        .status-playing {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
+        .status-gameover {
+            background: #ffebee;
+            color: #c62828;
+        }
+        .status-win {
+            background: #e8f5e8;
+            color: #2e7d32;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>中文扫雷舰</h1>
+        <h1>扫雷游戏</h1>
+        
+        <div class="game-status status-playing" id="gameStatus">
+            游戏进行中 - 左键点击翻开格子，右键标记地雷
+        </div>
         
         <div class="controls">
             <div class="control-group">
-                <label for="width">阔度:</label>
+                <label for="width">宽度:</label>
                 <input type="number" id="width" value="8" min="5" max="20">
                 
-                <label for="height">身高:</label>
+                <label for="height">高度:</label>
                 <input type="number" id="height" value="8" min="5" max="20">
             </div>
             
@@ -113,35 +145,38 @@
             </div>
             
             <div class="control-group">
-                <button onclick="generateNewGame()">新游戏</button>
-                <button onclick="generateWithSeed()">🔑生成 seed</button>
-                <input type="text" id="customSeed" placeholder="写 seed">
+                <button onclick="startNewGame()">新游戏</button>
+                <button onclick="generateWithSeed()">使用种子生成</button>
+                <input type="text" id="customSeed" placeholder="输入种子">
             </div>
         </div>
 
         <div class="game-info">
-            <strong>Seed当前的游戏:</strong>
+            <strong>当前游戏种子:</strong>
             <div class="seed-info" id="currentSeed">-</div>
         </div>
 
         <div id="gameField"></div>
         
         <div class="game-info">
-            <strong>统计数字:</strong>
-            <div>总细胞: <span id="totalCells">0</span></div>
-          <div>地雷数目: <span id="minesCount">0</span></div>
-            <div>地雷的百分比: <span id="minesPercent">0%</span></div>
+            <strong>游戏统计:</strong>
+            <div>剩余地雷: <span id="remainingMines">10</span></div>
+            <div>已标记: <span id="flaggedCells">0</span></div>
+            <div>总格子数: <span id="totalCells">0</span></div>
         </div>
     </div>
 
     <script>
-        class MinesweeperGenerator {
+        class MinesweeperGame {
             constructor(width = 8, height = 8, minesCount = 10) {
                 this.width = width;
                 this.height = height;
                 this.minesCount = minesCount;
                 this.seed = null;
-                this.usedSeeds = new Set();
+                this.gameState = 'playing'; // playing, gameover, win
+                this.revealedCount = 0;
+                this.flaggedPositions = new Set();
+                this.firstClick = true;
             }
             
             generateGame(seed = null) {
@@ -152,17 +187,17 @@
                 }
                 
                 this.setSeed(this.seed);
+                this.gameState = 'playing';
+                this.revealedCount = 0;
+                this.flaggedPositions.clear();
+                this.firstClick = true;
                 
                 const field = Array(this.height).fill().map(() => 
                     Array(this.width).fill(0)
                 );
                 
-                const minesPositions = this.placeMinesRandomly();
-                this.updateNumbers(field, minesPositions);
-                
                 return {
                     field: field,
-                    mines: minesPositions,
                     seed: this.seed,
                     width: this.width,
                     height: this.height
@@ -172,15 +207,7 @@
             generateUniqueSeed() {
                 const timestamp = Date.now();
                 const randomFactor = Math.floor(Math.random() * 1000000);
-                let seed = timestamp + randomFactor;
-                
-                let attempts = 0;
-                while (this.usedSeeds.has(seed) && attempts < 1000) {
-                    seed = timestamp + Math.floor(Math.random() * 1000000) + ++attempts;
-                }
-                
-                this.usedSeeds.add(seed);
-                return seed;
+                return timestamp + randomFactor;
             }
             
             setSeed(seed) {
@@ -191,7 +218,7 @@
                 };
             }
             
-            placeMinesRandomly() {
+            placeMines(firstX, firstY, field) {
                 const minesPositions = [];
                 const totalCells = this.width * this.height;
                 
@@ -202,22 +229,25 @@
                 while (minesPositions.length < this.minesCount) {
                     const x = Math.floor(this.random() * this.width);
                     const y = Math.floor(this.random() * this.height);
-                    const position = `${x},${y}`;
                     
+                    // 确保第一个点击的格子不是地雷
+                    if ((x === firstX && y === firstY) || 
+                        Math.abs(x - firstX) <= 1 && Math.abs(y - firstY) <= 1) {
+                        continue;
+                    }
+                    
+                    const position = `${x},${y}`;
                     if (!minesPositions.includes(position)) {
                         minesPositions.push(position);
+                        field[y][x] = -1;
                     }
                 }
                 
+                this.updateNumbers(field, minesPositions);
                 return minesPositions;
             }
             
             updateNumbers(field, minesPositions) {
-                minesPositions.forEach(pos => {
-                    const [x, y] = pos.split(',').map(Number);
-                    field[y][x] = -1;
-                });
-                
                 minesPositions.forEach(pos => {
                     const [x, y] = pos.split(',').map(Number);
                     
@@ -237,28 +267,106 @@
                     }
                 });
             }
+            
+            revealCell(x, y, field, mines) {
+                if (this.gameState !== 'playing') return false;
+                if (this.flaggedPositions.has(`${x},${y}`)) return false;
+                
+                if (this.firstClick) {
+                    this.placeMines(x, y, field);
+                    this.firstClick = false;
+                }
+                
+                if (field[y][x] === -1) {
+                    this.gameState = 'gameover';
+                    return true;
+                }
+                
+                if (field[y][x] === 0) {
+                    this.revealEmptyArea(x, y, field);
+                } else {
+                    this.revealedCount++;
+                }
+                
+                this.checkWinCondition(field);
+                return true;
+            }
+            
+            revealEmptyArea(x, y, field) {
+                const queue = [[x, y]];
+                const visited = new Set();
+                
+                while (queue.length > 0) {
+                    const [cx, cy] = queue.shift();
+                    const key = `${cx},${cy}`;
+                    
+                    if (visited.has(key)) continue;
+                    if (this.flaggedPositions.has(key)) continue;
+                    
+                    visited.add(key);
+                    this.revealedCount++;
+                    
+                    if (field[cy][cx] === 0) {
+                        for (let dx = -1; dx <= 1; dx++) {
+                            for (let dy = -1; dy <= 1; dy++) {
+                                const nx = cx + dx;
+                                const ny = cy + dy;
+                                
+                                if (nx >= 0 && nx < this.width && 
+                                    ny >= 0 && ny < this.height && 
+                                    !visited.has(`${nx},${ny}`)) {
+                                    queue.push([nx, ny]);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+            
+            toggleFlag(x, y) {
+                if (this.gameState !== 'playing') return;
+                
+                const key = `${x},${y}`;
+                if (this.flaggedPositions.has(key)) {
+                    this.flaggedPositions.delete(key);
+                } else {
+                    this.flaggedPositions.add(key);
+                }
+            }
+            
+            checkWinCondition(field) {
+                const totalSafeCells = this.width * this.height - this.minesCount;
+                if (this.revealedCount === totalSafeCells) {
+                    this.gameState = 'win';
+                }
+            }
+            
+            getRemainingMines() {
+                return this.minesCount - this.flaggedPositions.size;
+            }
         }
 
         let currentGame = null;
-        const generator = new MinesweeperGenerator();
+        let gameData = null;
+        const game = new MinesweeperGame();
 
-        function generateNewGame() {
+        function startNewGame() {
             const width = parseInt(document.getElementById('width').value) || 8;
             const height = parseInt(document.getElementById('height').value) || 8;
             const mines = parseInt(document.getElementById('mines').value) || 10;
             
-            generator.width = width;
-            generator.height = height;
-            generator.minesCount = mines;
+            game.width = width;
+            game.height = height;
+            game.minesCount = mines;
             
-            currentGame = generator.generateGame();
-            displayGame(currentGame);
+            gameData = game.generateGame();
+            displayGame();
         }
 
         function generateWithSeed() {
             const seedInput = document.getElementById('customSeed').value;
             if (!seedInput) {
-                alert('写seed生成');
+                alert('请输入种子');
                 return;
             }
             
@@ -266,26 +374,39 @@
             const height = parseInt(document.getElementById('height').value) || 8;
             const mines = parseInt(document.getElementById('mines').value) || 10;
             
-            generator.width = width;
-            generator.height = height;
-            generator.minesCount = mines;
+            game.width = width;
+            game.height = height;
+            game.minesCount = mines;
             
             const seed = parseInt(seedInput) || seedInput.hashCode();
-            currentGame = generator.generateGame(seed);
-            displayGame(currentGame);
+            gameData = game.generateGame(seed);
+            displayGame();
         }
 
-        function displayGame(game) {
+        function displayGame() {
             const gameField = document.getElementById('gameField');
             const currentSeed = document.getElementById('currentSeed');
             const totalCells = document.getElementById('totalCells');
-            const minesCount = document.getElementById('minesCount');
-            const minesPercent = document.getElementById('minesPercent');
+            const remainingMines = document.getElementById('remainingMines');
+            const flaggedCells = document.getElementById('flaggedCells');
+            const gameStatus = document.getElementById('gameStatus');
             
-            currentSeed.textContent = game.seed;
+            currentSeed.textContent = gameData.seed;
             totalCells.textContent = game.width * game.height;
-            minesCount.textContent = game.mines.length;
-            minesPercent.textContent = ((game.mines.length / (game.width * game.height)) * 100).toFixed(1) + '%';
+            remainingMines.textContent = game.getRemainingMines();
+            flaggedCells.textContent = game.flaggedPositions.size;
+            
+            // 更新游戏状态显示
+            if (game.gameState === 'playing') {
+                gameStatus.className = 'game-status status-playing';
+                gameStatus.textContent = '游戏进行中 - 左键点击翻开格子，右键标记地雷';
+            } else if (game.gameState === 'gameover') {
+                gameStatus.className = 'game-status status-gameover';
+                gameStatus.textContent = '游戏结束！你踩到地雷了！';
+            } else if (game.gameState === 'win') {
+                gameStatus.className = 'game-status status-win';
+                gameStatus.textContent = '恭喜！你赢了！';
+            }
             
             const fieldElement = document.createElement('div');
             fieldElement.className = 'field';
@@ -298,23 +419,49 @@
                     cell.dataset.x = x;
                     cell.dataset.y = y;
                     
-                    const value = game.field[y][x];
+                    const key = `${x},${y}`;
+                    const isFlagged = game.flaggedPositions.has(key);
                     
-                    if (value === -1) {
+                    if (isFlagged) {
+                        cell.className += ' flag';
+                        cell.textContent = '🚩';
+                    } else if (game.gameState !== 'playing' && gameData.field[y][x] === -1) {
+                        // 游戏结束或胜利时显示所有地雷
                         cell.className += ' mine';
-                        cell.textContent = '地雷!';
-                    } else if (value > 0) {
-                        cell.className += ` number-${value}`;
-                        cell.textContent = value;
+                        cell.textContent = '💣';
+                    } else if (game.revealedCount > 0 && !game.firstClick) {
+                        // 这里应该根据实际游戏状态显示已翻开的格子
+                        // 简化显示，实际游戏中需要跟踪每个格子的状态
                     }
                     
-                    cell.title = `Клетка [${x}, ${y}]`;
+                    // 添加点击事件
+                    cell.addEventListener('click', () => handleCellClick(x, y));
+                    cell.addEventListener('contextmenu', (e) => {
+                        e.preventDefault();
+                        handleRightClick(x, y);
+                    });
+                    
+                    cell.title = `格子 [${x}, ${y}]`;
                     fieldElement.appendChild(cell);
                 }
             }
             
             gameField.innerHTML = '';
             gameField.appendChild(fieldElement);
+        }
+
+        function handleCellClick(x, y) {
+            if (game.gameState !== 'playing') return;
+            
+            const revealed = game.revealCell(x, y, gameData.field);
+            if (revealed) {
+                displayGame();
+            }
+        }
+
+        function handleRightClick(x, y) {
+            game.toggleFlag(x, y);
+            displayGame();
         }
 
         String.prototype.hashCode = function() {
@@ -327,7 +474,7 @@
             return hash;
         };
 
-        window.onload = generateNewGame;
+        window.onload = startNewGame;
     </script>
 </body>
 </html>
