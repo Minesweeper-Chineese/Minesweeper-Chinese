@@ -90,7 +90,7 @@
             cursor: pointer;
             user-select: none;
             font-size: 14px;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
             transition: all 0.1s;
         }
         .cell:active {
@@ -116,6 +116,7 @@
         .cell.highlight-flag {
             background: #ffcccc !important;
         }
+        /* Стили для китайских цифр */
         .cell.number-1 { color: #0000ff; }
         .cell.number-2 { color: #008000; }
         .cell.number-3 { color: #ff0000; }
@@ -233,11 +234,11 @@
     <div class="container">
         <div class="game-header">
             <div class="mines-counter">
-                雷: <span id="remainingMines">10</span>
+                雷: <span id="remainingMines">十</span>
             </div>
-            <button class="smiley-btn" onclick="startNewGame()">阿!</button>
+            <button class="smiley-btn" onclick="startNewGame()">🇨🇳</button>
             <div class="timer">
-                时: <span id="gameTimer">0</span>
+                时: <span id="gameTimer">〇</span>
             </div>
         </div>
 
@@ -279,13 +280,57 @@
             <input type="text" id="customSeed" class="seed-input" placeholder="输入种子号">
 
             <div class="game-info">
-                <div>已开: <span id="revealedCells">0</span>/<span id="totalCells">81</span></div>
+                <div>已开: <span id="revealedCells">〇</span>/<span id="totalCells">八十一</span></div>
                 <div>种子: <span class="seed-info" id="currentSeed">-</span></div>
             </div>
         </div>
     </div>
 
     <script>
+        // Функция для преобразования арабских цифр в китайские
+        function toChineseNumber(num) {
+            const chineseNumbers = {
+                0: '〇',
+                1: '一',
+                2: '二', 
+                3: '三',
+                4: '四',
+                5: '五',
+                6: '六',
+                7: '七',
+                8: '八',
+                9: '九',
+                10: '十',
+                11: '十一',
+                12: '十二',
+                13: '十三',
+                14: '十四',
+                15: '十五',
+                16: '十六',
+                17: '十七',
+                18: '十八',
+                19: '十九',
+                20: '二十',
+                21: '二十一',
+                22: '二十二',
+                23: '二十三',
+                24: '二十四',
+                25: '二十五',
+                26: '二十六',
+                27: '二十七',
+                28: '二十八',
+                29: '二十九',
+                30: '三十'
+            };
+            
+            if (num <= 30) {
+                return chineseNumbers[num];
+            } else {
+                // Для чисел больше 30 используем комбинацию
+                return num.toString().split('').map(digit => chineseNumbers[digit]).join('');
+            }
+        }
+
         class MinesweeperGame {
             constructor(width = 9, height = 9, minesCount = 10) {
                 this.width = width;
@@ -485,7 +530,6 @@
                 }
             }
             
-            // БЫСТРОЕ ОТКРЫТИЕ - исправленная версия
             chordClick(x, y) {
                 if (this.gameState !== 'playing') return;
                 if (this.cellStates[`${x},${y}`] !== 'revealed') return;
@@ -495,7 +539,6 @@
                 let flagCount = 0;
                 const cellsToReveal = [];
                 
-                // Считаем флажки вокруг и собираем клетки для открытия
                 for (let dx = -1; dx <= 1; dx++) {
                     for (let dy = -1; dy <= 1; dy++) {
                         if (dx === 0 && dy === 0) continue;
@@ -514,7 +557,6 @@
                     }
                 }
                 
-                // Если количество флажков совпадает с цифрой - открываем
                 if (flagCount === cellValue) {
                     let hitMine = false;
                     
@@ -532,7 +574,6 @@
                 }
             }
             
-            // ПОДСВЕТКА для быстрого открытия - исправленная
             highlightChordArea(x, y) {
                 this.highlightedCells.clear();
                 
@@ -647,7 +688,7 @@
 
         function updateTimer() {
             if (game.gameState === 'playing' && game.startTime) {
-                document.getElementById('gameTimer').textContent = game.getElapsedTime();
+                document.getElementById('gameTimer').textContent = toChineseNumber(game.getElapsedTime());
             }
         }
 
@@ -682,10 +723,10 @@
             const gameTimer = document.getElementById('gameTimer');
             
             currentSeed.textContent = gameData.seed;
-            totalCells.textContent = game.width * game.height;
-            remainingMines.textContent = game.getRemainingMines();
-            revealedCells.textContent = game.revealedCount;
-            gameTimer.textContent = game.getElapsedTime();
+            totalCells.textContent = toChineseNumber(game.width * game.height);
+            remainingMines.textContent = toChineseNumber(game.getRemainingMines());
+            revealedCells.textContent = toChineseNumber(game.revealedCount);
+            gameTimer.textContent = toChineseNumber(game.getElapsedTime());
             
             const fieldElement = document.createElement('div');
             fieldElement.className = 'field';
@@ -702,7 +743,6 @@
                     const value = gameData.field[y][x];
                     const cellState = game.cellStates[key];
                     
-                    // Основное отображение клетки
                     if (cellState === 'revealed') {
                         cell.classList.add('revealed');
                         if (value === -1) {
@@ -710,7 +750,8 @@
                             cell.textContent = '雷';
                         } else if (value > 0) {
                             cell.classList.add(`number-${value}`);
-                            cell.textContent = value;
+                            // Отображаем китайскую цифру вместо арабской
+                            cell.textContent = toChineseNumber(value);
                         }
                     } else {
                         if (game.flaggedPositions.has(key)) {
@@ -718,26 +759,22 @@
                         }
                     }
                     
-                    // Подсветка для быстрого открытия
                     if (game.highlightedCells.has(key)) {
                         cell.classList.add('highlight');
                     } else if (game.highlightedCells.has(key + '-flag')) {
                         cell.classList.add('highlight-flag');
                     }
                     
-                    // Показ всех мин при проигрыше
                     if (game.gameState === 'gameover' && value === -1 && !game.flaggedPositions.has(key)) {
                         cell.classList.add('revealed', 'mine');
                         cell.textContent = '雷';
                     }
                     
-                    // Обработчики событий
                     cell.addEventListener('click', () => handleCellClick(x, y));
                     
-                    // Для быстрого открытия - зажатие на открытой цифре
                     if (cellState === 'revealed' && value > 0) {
                         cell.addEventListener('mousedown', (e) => {
-                            if (e.button === 0) { // Левая кнопка
+                            if (e.button === 0) {
                                 handleChordStart(x, y);
                             }
                         });
@@ -748,7 +785,6 @@
                         });
                     }
                     
-                    // Правая кнопка для флажков
                     cell.addEventListener('contextmenu', (e) => {
                         e.preventDefault();
                         game.toggleFlag(x, y);
