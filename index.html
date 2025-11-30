@@ -70,8 +70,8 @@
         /* ОБНОВЛЁННОЕ ПОЛЕ - пиксельное как в оригинале */
         .field {
             display: inline-grid;
-            gap: 0; /* УБРАТЬ промежутки между клетками */
-            background: #a0a0a0; /* СЕРЫЙ фон как в Windows */
+            gap: 1px;
+            background: #7f7f7f; /* СЕРЫЙ фон как в Windows */
             padding: 8px;
             border: 4px outset #a0a0a0; /* Классическая 3D граница */
             margin: 0 auto;
@@ -82,8 +82,8 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            background: #a0a0a0; /* СЕРЫЙ фон */
-            border: 2px outset #c0c0c0; /* 3D эффект выпуклой кнопки */
+            background: #c0c0c0; /* СЕРЫЙ фон */
+            border: 3px outset #efefef; /* 3D эффект выпуклой кнопки */
             font-weight: bold;
             cursor: pointer;
             user-select: none;
@@ -91,11 +91,11 @@
             font-family: 'Microsoft YaHei', 'Segoe UI', sans-serif;
         }
         .cell:active {
-            border: 2px inset #c0c0c0; /* Вдавленный эффект при нажатии */
+            border: 3px inset #c0c0c0; /* Вдавленный эффект при нажатии */
         }
         .cell.revealed {
-            border: 1px solid #808080; /* Плоская серая граница */
-            background: #c4c4c4; /* Остаётся серым */
+            border: none; /* Плоская серая граница */
+            background: #c0c0c0; /* Остаётся серым */
         }
         .cell.mine.revealed {
             background: #ff0000;
